@@ -124,7 +124,7 @@ class GithubSchemaLoader implements SchemaLoaderInterface
             $itemPath = $item['path'] ?? null;
             $downloadUrl = $item['download_url'] ?? null;
 
-            if (\is_string($type)  === false|| \is_string($name) === false || \is_string($itemPath) === false) {
+            if (\is_string($type)  === false || \is_string($name) === false || \is_string($itemPath) === false) {
                 continue;
             }
 
