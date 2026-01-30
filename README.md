@@ -2,6 +2,13 @@
 
 Symfony Behat extension for automatic OpenAPI validation of HTTP requests/responses using [league/openapi-psr7-validator](https://github.com/thephpleague/openapi-psr7-validator).
 
+=================================
+
+| Version | Build Status | Code Coverage |
+|:---------:|:-------------:|:-----:|
+| `main`| [![CI][main Build Status Image]][main Build Status] | [![Coverage Status][main Code Coverage Image]][main Code Coverage] |
+| `develop`| [![CI][develop Build Status Image]][develop Build Status] | [![Coverage Status][develop Code Coverage Image]][develop Code Coverage] |
+
 ## Features
 
 - Automatic request/response validation against OpenAPI schemas
@@ -122,3 +129,16 @@ Configure via `should_request_on_4xx_be_skipped: false` to always validate reque
 ## License
 
 MIT
+
+
+---
+
+[master Build Status]: https://github.com/MacPaw/behat-openapi-psr7-validator/actions/workflows/ci.yaml
+[master Build Status Image]: https://github.com/MacPaw/behat-openapi-psr7-validator/actions/workflows/ci.yaml/badge.svg?branch=master
+[develop Build Status]: https://github.com/MacPaw/behat-openapi-psr7-validator/actions/workflows/ci.yaml
+[develop Build Status Image]: https://github.com/MacPaw/behat-openapi-psr7-validator/actions/workflows/ci.yaml/badge.svg?branch=develop
+[master Code Coverage]: https://codecov.io/gh/macpaw/behat-openapi-psr7-validator/branch/master
+[master Code Coverage Image]: https://img.shields.io/codecov/c/github/macpaw/behat-openapi-psr7-validator/master?logo=codecov
+[develop Code Coverage]: https://codecov.io/gh/macpaw/behat-openapi-psr7-validator/branch/develop
+[develop Code Coverage Image]: https://img.shields.io/codecov/c/github/macpaw/behat-openapi-psr7-validator/develop?logo=codecov
+[Latest Release]: https://img.shields.io/github/v/release/macpaw/behat-openapi-psr7-validator
