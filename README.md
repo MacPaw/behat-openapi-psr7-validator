@@ -2,12 +2,13 @@
 
 Symfony Behat extension for automatic OpenAPI validation of HTTP requests/responses using [league/openapi-psr7-validator](https://github.com/thephpleague/openapi-psr7-validator).
 
-=================================
 
-| Version | Build Status | Code Coverage |
-|:---------:|:-------------:|:-----:|
-| `main`| [![CI][main Build Status Image]][main Build Status] | [![Coverage Status][main Code Coverage Image]][main Code Coverage] |
-| `develop`| [![CI][develop Build Status Image]][develop Build Status] | [![Coverage Status][develop Code Coverage Image]][develop Code Coverage] |
+|  Version  |                       Build Status                        |                              Code Coverage                               |   Latest Release  |
+|:---------:|:---------------------------------------------------------:|:------------------------------------------------------------------------:| :---------------: |
+|  `main`   |    [![CI][main Build Status Image]][main Build Status]    |    [![Coverage Status][main Code Coverage Image]][main Code Coverage]    | ![Latest Release] |
+| `develop` | [![CI][develop Build Status Image]][develop Build Status] | [![Coverage Status][develop Code Coverage Image]][develop Code Coverage] |         -         |
+
+---
 
 ## Features
 
@@ -133,12 +134,12 @@ MIT
 
 ---
 
-[master Build Status]: https://github.com/MacPaw/behat-openapi-psr7-validator/actions/workflows/ci.yaml
-[master Build Status Image]: https://github.com/MacPaw/behat-openapi-psr7-validator/actions/workflows/ci.yaml/badge.svg?branch=master
-[develop Build Status]: https://github.com/MacPaw/behat-openapi-psr7-validator/actions/workflows/ci.yaml
-[develop Build Status Image]: https://github.com/MacPaw/behat-openapi-psr7-validator/actions/workflows/ci.yaml/badge.svg?branch=develop
-[master Code Coverage]: https://codecov.io/gh/macpaw/behat-openapi-psr7-validator/branch/master
-[master Code Coverage Image]: https://img.shields.io/codecov/c/github/macpaw/behat-openapi-psr7-validator/master?logo=codecov
+[main Build Status]: https://github.com/MacPaw/behat-openapi-psr7-validator/actions/workflows/ci.yml?query=branch%3Amain
+[main Build Status Image]: https://github.com/MacPaw/behat-openapi-psr7-validator/actions/workflows/ci.yml/badge.svg?branch=main
+[develop Build Status]: https://github.com/MacPaw/behat-openapi-psr7-validator/actions/workflows/ci.yml?query=branch%3Adevelop
+[develop Build Status Image]: https://github.com/MacPaw/behat-openapi-psr7-validator/actions/workflows/ci.yml/badge.svg?branch=develop
+[main Code Coverage]: https://codecov.io/gh/macpaw/behat-openapi-psr7-validator/branch/main
+[main Code Coverage Image]: https://img.shields.io/codecov/c/github/macpaw/behat-openapi-psr7-validator/main?logo=codecov
 [develop Code Coverage]: https://codecov.io/gh/macpaw/behat-openapi-psr7-validator/branch/develop
 [develop Code Coverage Image]: https://img.shields.io/codecov/c/github/macpaw/behat-openapi-psr7-validator/develop?logo=codecov
 [Latest Release]: https://img.shields.io/github/v/release/macpaw/behat-openapi-psr7-validator
