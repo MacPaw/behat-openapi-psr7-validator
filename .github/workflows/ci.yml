@@ -141,4 +141,4 @@ jobs:
           check: false
 
       - name: Check conventional commits
-        run: cog check ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
+        run: cog check --ignore-merge-commits ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
