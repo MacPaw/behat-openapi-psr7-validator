@@ -1,0 +1,79 @@
+{
+  "name": "macpaw/behat-openapi-psr7-validator",
+  "description": "Behat extension for automatic OpenAPI validation of HTTP requests/responses using league/openapi-psr7-validator",
+  "type": "symfony-bundle",
+  "keywords": [
+    "MacPaw",
+    "symfony",
+    "behat",
+    "BDD",
+    "API",
+    "OpenAPI",
+    "PSR-7",
+    "Validator"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/macpaw/behat-openapi-psr7-validator",
+  "authors": [
+    {
+      "name": "MacPaw Team",
+      "homepage": "https://macpaw.com"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/macpaw/behat-openapi-psr7-validator/issues",
+    "source": "https://github.com/macpaw/behat-openapi-psr7-validator"
+  },
+  "require": {
+    "php": ">=8.2",
+    "behat/behat": "^3.10",
+    "league/openapi-psr7-validator": "^0.22",
+    "macpaw/behat-api-context": "^3.0",
+    "nyholm/psr7": "^1.8",
+    "psr/http-client": "^1.0",
+    "psr/http-factory": "^1.0",
+    "symfony/config": "^6.4|^7.0",
+    "symfony/dependency-injection": "^6.4|^7.0",
+    "symfony/finder": "^6.4|^7.0",
+    "symfony/http-kernel": "^6.4|^7.0",
+    "symfony/http-client": "^6.4|^7.0",
+    "symfony/psr-http-message-bridge": "^6.4|^7.0",
+    "symfony/yaml": "^6.4|^7.0"
+  },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.93",
+    "phpstan/phpstan": "^2.0",
+    "phpunit/phpunit": "^10.5|^11.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "BehatOpenApiValidator\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "BehatOpenApiValidator\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit",
+    "test:coverage": "phpunit --coverage-clover=coverage.xml --coverage-text",
+    "cs:check": "php-cs-fixer fix --dry-run --diff",
+    "cs:fix": "php-cs-fixer fix",
+    "phpstan": "phpstan analyse",
+    "qa": [
+      "@cs:check",
+      "@phpstan",
+      "@test"
+    ]
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "extra": {
+    "symfony": {
+      "allow-contrib": false,
+      "require": "^6.4|^7.0"
+    }
+  }
+}

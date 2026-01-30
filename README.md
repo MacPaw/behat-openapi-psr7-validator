@@ -1,2 +1,124 @@
-# behat-openapi-psr7-validator
-Behat extension for automatic OpenAPI validation of HTTP requests/responses
+# Behat OpenAPI PSR-7 Validator
+
+Symfony Behat extension for automatic OpenAPI validation of HTTP requests/responses using [league/openapi-psr7-validator](https://github.com/thephpleague/openapi-psr7-validator).
+
+## Features
+
+- Automatic request/response validation against OpenAPI schemas
+- Scan local directories for OpenAPI YAML files
+- Fetch OpenAPI specs from remote GitHub repositories (with token support for private repos)
+- Separate control for request and response validation skipping
+- Auto-skip request validation for 4xx responses (configurable)
+- Tag-based and step-based validation control
+
+## Installation
+
+```bash
+composer require --dev macpaw/behat-openapi-psr7-validator
+```
+
+### HTTP Client Requirement (Optional)
+
+GitHub schema loading requires a PSR-18 HTTP client registered as `Psr\Http\Client\ClientInterface`. The GitHub loader only activates when both conditions are met:
+- `github_sources` is configured
+- HTTP client service is available
+
+If using only `local_paths`, no HTTP client is needed.
+
+```bash
+# Install if using github_sources
+composer require symfony/http-client
+```
+
+## Configuration
+
+### 1. Register the bundle
+
+```php
+// config/bundles.php
+return [
+    // ... other bundles
+    BehatOpenApiValidator\BehatOpenApiValidatorBundle::class => ['test' => true],
+];
+```
+
+### 2. Configure the package and register event subscriber
+
+```yaml
+# config/packages/behat_openapi_validator.yaml
+when@test:
+    behat_openapi_validator:
+        is_enabled: true
+        should_request_on_4xx_be_skipped: true
+        local_paths:
+            - '%kernel.project_dir%/docs/openapi'
+        github_sources:
+            - url: 'https://github.com/Owner/Repo/tree/main/docs/openapi'
+              token_env: 'GITHUB_TOKEN'
+
+    services:
+      BehatOpenApiValidator\EventListener\ApiContextListener:
+        tags: ['kernel.event_subscriber']
+```
+
+### 3. Add context to behat.yml
+
+```yaml
+default:
+    suites:
+        default:
+            contexts:
+                - BehatOpenApiValidator\Context\OpenApiValidatorContext
+```
+
+## Usage
+
+### Automatic Validation
+
+Once configured, the package automatically validates:
+- **Requests**: Validated against OpenAPI schema before response
+- **Responses**: Validated against OpenAPI schema after response
+
+### Skip Validation
+
+#### Using Tags
+
+```gherkin
+@skipOpenApiValidation
+Scenario: Skip all validation
+    When I send "GET" request to "some_route" route
+
+@skipOpenApiRequestValidation
+Scenario: Skip only request validation
+    When I send "POST" request to "invalid_request_route" route
+
+@skipOpenApiResponseValidation  
+Scenario: Skip only response validation
+    When I send "GET" request to "route_with_custom_response" route
+```
+
+#### Using Steps
+
+```gherkin
+Scenario: Disable validation via step
+    Given OpenAPI validation is disabled
+    When I send "GET" request to "some_route" route
+
+Scenario: Disable only request validation
+    Given OpenAPI request validation is disabled
+    When I send "POST" request to "some_route" route
+
+Scenario: Disable only response validation
+    Given OpenAPI response validation is disabled
+    When I send "GET" request to "some_route" route
+```
+
+### 4xx Response Handling
+
+By default, request validation is skipped for 4xx responses (the request is intentionally invalid to trigger the error). Response validation still runs to ensure error responses match the OpenAPI error schema.
+
+Configure via `should_request_on_4xx_be_skipped: false` to always validate requests.
+
+## License
+
+MIT
