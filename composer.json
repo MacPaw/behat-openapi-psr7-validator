@@ -32,13 +32,13 @@
     "nyholm/psr7": "^1.8",
     "psr/http-client": "^1.0",
     "psr/http-factory": "^1.0",
-    "symfony/config": "^6.4|^7.0|^8.0",
-    "symfony/dependency-injection": "^6.4|^7.0|^8.0",
-    "symfony/finder": "^6.4|^7.0|^8.0",
-    "symfony/http-kernel": "^6.4|^7.0|^8.0",
-    "symfony/http-client": "^6.4|^7.0|^8.0",
-    "symfony/psr-http-message-bridge": "^6.4|^7.0|^8.0",
-    "symfony/yaml": "^6.4|^7.0|^8.0"
+    "symfony/config": "^6.4|^7.0",
+    "symfony/dependency-injection": "^6.4|^7.0",
+    "symfony/finder": "^6.4|^7.0",
+    "symfony/http-kernel": "^6.4|^7.0",
+    "symfony/http-client": "^6.4|^7.0",
+    "symfony/psr-http-message-bridge": "^6.4|^7.0",
+    "symfony/yaml": "^6.4|^7.0"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.93",
@@ -73,7 +73,7 @@
   "extra": {
     "symfony": {
       "allow-contrib": false,
-      "require": "^6.4|^7.0|^8.0"
+      "require": "^6.4|^7.0"
     }
   }
 }
