@@ -135,5 +135,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check conventional commits
+      - name: Install cocogitto
         uses: cocogitto/cocogitto-action@v3
+        with:
+          check: false
+
+      - name: Check conventional commits
+        run: cog check ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
