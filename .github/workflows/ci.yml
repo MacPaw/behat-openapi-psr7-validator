@@ -9,6 +9,10 @@ on:
       - opened
       - reopened
       - synchronize
+  push:
+    branches:
+      - main
+      - develop
 
 jobs:
   tests:
@@ -129,6 +133,7 @@ jobs:
 
   conventional-commits:
     name: Conventional Commits
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
