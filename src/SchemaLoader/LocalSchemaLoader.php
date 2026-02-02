@@ -11,7 +11,7 @@ class LocalSchemaLoader implements SchemaLoaderInterface
     /**
      * @param list<string> $paths
      */
-    public function __construct(private readonly array $paths) {}
+    public function __construct(protected readonly array $paths) {}
 
     public function loadSchemas(): array
     {
