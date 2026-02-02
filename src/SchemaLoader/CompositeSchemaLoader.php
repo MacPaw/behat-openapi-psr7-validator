@@ -9,7 +9,7 @@ class CompositeSchemaLoader implements SchemaLoaderInterface
     /**
      * @param list<SchemaLoaderInterface> $loaders
      */
-    public function __construct(private readonly array $loaders) {}
+    public function __construct(protected readonly array $loaders) {}
 
     public function loadSchemas(): array
     {
