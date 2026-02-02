@@ -16,9 +16,9 @@ class GithubSchemaLoader implements SchemaLoaderInterface
      * @param list<array{url: string, token_env: string|null}> $sources
      */
     public function __construct(
-        private readonly array $sources,
-        private readonly ClientInterface $httpClient,
-        private readonly RequestFactoryInterface $requestFactory
+        protected readonly array $sources,
+        protected readonly ClientInterface $httpClient,
+        protected readonly RequestFactoryInterface $requestFactory
     ) {}
 
     public function loadSchemas(): array
@@ -32,7 +32,7 @@ class GithubSchemaLoader implements SchemaLoaderInterface
 
             if ($tokenEnv !== null) {
                 $envValue = $_ENV[$tokenEnv] ?? getenv($tokenEnv);
-                $token = \is_string($envValue) ? $envValue : null;
+                $token = \is_string($envValue) && $envValue !== '' ? $envValue : null;
             }
 
             $parsed = $this->parseGithubUrl($url);
@@ -120,14 +120,14 @@ class GithubSchemaLoader implements SchemaLoaderInterface
                 \sprintf(
                     'GitHub API request failed for "%s" (%s): %s',
                     $apiUrl,
-                    $token !== null && $token !== '' ? 'with authentication' : 'without authentication',
+                    $token === null ? 'without authentication' : 'with authentication',
                     $e->getMessage()
                 ),
                 previous: $e
             );
         }
 
-        $this->validateResponse($response, $apiUrl);
+        $this->validateResponse($response, $apiUrl, $token);
         $contents = $this->decodeJsonResponse($response, $apiUrl);
 
         $schemas = [];
@@ -177,19 +177,19 @@ class GithubSchemaLoader implements SchemaLoaderInterface
                 \sprintf(
                     'Failed to fetch file from "%s" (%s): %s',
                     $url,
-                    $token !== null && $token !== '' ? 'with authentication' : 'without authentication',
+                    $token === null ? 'without authentication' : 'with authentication',
                     $e->getMessage(),
                 ),
                 previous: $e
             );
         }
 
-        $this->validateResponse($response, $url);
+        $this->validateResponse($response, $url, $token);
 
         return $response->getBody()->getContents();
     }
 
-    private function validateResponse(ResponseInterface $response, string $url): void
+    private function validateResponse(ResponseInterface $response, string $url, ?string $token): void
     {
         $statusCode = $response->getStatusCode();
 
@@ -210,8 +210,9 @@ class GithubSchemaLoader implements SchemaLoaderInterface
 
         throw new SchemaLoaderException(
             \sprintf(
-                'GitHub API request failed for "%s": HTTP %d %s',
+                'GitHub API request failed for "%s" (%s): HTTP %d %s',
                 $url,
+                $token === null ? 'without authentication' : 'with authentication',
                 $statusCode,
                 $response->getReasonPhrase()
             )
