@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace BehatOpenApiValidator\SchemaLoader;
 
+use BehatOpenApiValidator\SchemaLoader\Exception\SchemaLoaderException;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class GithubSchemaLoader implements SchemaLoaderInterface
 {
@@ -34,8 +36,14 @@ class GithubSchemaLoader implements SchemaLoaderInterface
             }
 
             $parsed = $this->parseGithubUrl($url);
+
             if ($parsed === null) {
-                continue;
+                throw new SchemaLoaderException(
+                    \sprintf(
+                        'Invalid GitHub URL format: "%s". Expected: https://github.com/owner/repo/tree/branch/path',
+                        $url
+                    )
+                );
             }
 
             $files = $this->fetchDirectoryContents(
@@ -49,6 +57,12 @@ class GithubSchemaLoader implements SchemaLoaderInterface
             foreach ($files as $filePath => $content) {
                 $schemas[$filePath] = $content;
             }
+        }
+
+        if ($schemas === []) {
+            throw new SchemaLoaderException(
+                'No OpenAPI schema files were found in the specified GitHub repositories.'
+            );
         }
 
         return $schemas;
@@ -101,40 +115,35 @@ class GithubSchemaLoader implements SchemaLoaderInterface
 
         try {
             $response = $this->httpClient->sendRequest($request);
-            $contents = json_decode($response->getBody()->getContents(), true);
-        } catch (ClientExceptionInterface) {
-            return [];
+        } catch (ClientExceptionInterface $e) {
+            throw new SchemaLoaderException(
+                \sprintf('GitHub API request failed for "%s": %s', $apiUrl, $e->getMessage()),
+                previous: $e
+            );
         }
 
-        if (\is_array($contents) === false) {
-            return [];
-        }
+        $this->validateResponse($response, $apiUrl);
+        $contents = $this->decodeJsonResponse($response, $apiUrl);
 
         $schemas = [];
 
-        /** @var mixed $item */
         foreach ($contents as $item) {
-            if (\is_array($item) === false) {
-                continue;
-            }
+            $type = $item['type'];
+            $name = $item['name'];
+            $itemPath = $item['path'];
+            $downloadUrl = $item['download_url'];
 
-            /** @var array<string, mixed> $item */
-            $type = $item['type'] ?? null;
-            $name = $item['name'] ?? null;
-            $itemPath = $item['path'] ?? null;
-            $downloadUrl = $item['download_url'] ?? null;
-
-            if (\is_string($type)  === false || \is_string($name) === false || \is_string($itemPath) === false) {
-                continue;
-            }
-
-            if ($type === 'file' && $this->isYamlFile($name) && \is_string($downloadUrl)) {
+            if ($type === 'file' && \is_string($downloadUrl) && $this->isYamlFile($name)) {
                 $fileContent = $this->fetchFileContent($downloadUrl, $token);
-                if ($fileContent !== null) {
-                    $schemas[$itemPath] = $fileContent;
-                }
+                $schemas[$itemPath] = $fileContent;
             } elseif ($type === 'dir') {
-                $subSchemas = $this->fetchDirectoryContents($owner, $repo, $itemPath, $ref, $token);
+                $subSchemas = $this->fetchDirectoryContents(
+                    owner: $owner,
+                    repo: $repo,
+                    path: $itemPath,
+                    ref: $ref,
+                    token: $token
+                );
                 $schemas = array_merge($schemas, $subSchemas);
             }
         }
@@ -147,7 +156,7 @@ class GithubSchemaLoader implements SchemaLoaderInterface
         return str_ends_with($filename, '.yaml') || str_ends_with($filename, '.yml');
     }
 
-    private function fetchFileContent(string $url, ?string $token): ?string
+    private function fetchFileContent(string $url, ?string $token): string
     {
         $request = $this->requestFactory->createRequest('GET', $url)
             ->withHeader('User-Agent', 'BehatOpenApiValidator');
@@ -158,10 +167,68 @@ class GithubSchemaLoader implements SchemaLoaderInterface
 
         try {
             $response = $this->httpClient->sendRequest($request);
-
-            return $response->getBody()->getContents();
-        } catch (ClientExceptionInterface) {
-            return null;
+        } catch (ClientExceptionInterface $e) {
+            throw new SchemaLoaderException(
+                \sprintf('Failed to fetch file from "%s": %s', $url, $e->getMessage()),
+                previous: $e
+            );
         }
+
+        $this->validateResponse($response, $url);
+
+        return $response->getBody()->getContents();
+    }
+
+    private function validateResponse(ResponseInterface $response, string $url): void
+    {
+        $statusCode = $response->getStatusCode();
+
+        if ($statusCode >= 200 && $statusCode < 300) {
+            return;
+        }
+
+        if ($statusCode === 403 && $response->getHeaderLine('X-RateLimit-Remaining') === '0') {
+            $resetTime = $response->getHeaderLine('X-RateLimit-Reset');
+            $message = \sprintf('GitHub API rate limit exceeded for "%s"', $url);
+
+            if ($resetTime !== '') {
+                $message .= \sprintf('. Reset at: %s', date('Y-m-d H:i:s', (int) $resetTime));
+            }
+
+            throw new SchemaLoaderException($message);
+        }
+
+        throw new SchemaLoaderException(
+            \sprintf(
+                'GitHub API request failed for "%s": HTTP %d %s',
+                $url,
+                $statusCode,
+                $response->getReasonPhrase()
+            )
+        );
+    }
+
+    /**
+     * @return non-empty-list<array{name: string, path: string, type: string, download_url: string|null}>
+     */
+    private function decodeJsonResponse(ResponseInterface $response, string $url): array
+    {
+        $body = $response->getBody()->getContents();
+
+        try {
+            /** @var list<array{name: string, path: string, type: string, download_url: string|null}> $contents */
+            $contents = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new SchemaLoaderException(
+                \sprintf('Invalid JSON response from "%s": %s', $url, $e->getMessage()),
+                previous: $e
+            );
+        }
+
+        if ($contents === []) {
+            throw new SchemaLoaderException(\sprintf('GitHub API returned invalid response for "%s"', $url));
+        }
+
+        return $contents;
     }
 }
