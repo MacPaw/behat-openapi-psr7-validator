@@ -117,7 +117,12 @@ class GithubSchemaLoader implements SchemaLoaderInterface
             $response = $this->httpClient->sendRequest($request);
         } catch (ClientExceptionInterface $e) {
             throw new SchemaLoaderException(
-                \sprintf('GitHub API request failed for "%s": %s', $apiUrl, $e->getMessage()),
+                \sprintf(
+                    'GitHub API request failed for "%s" (%s): %s',
+                    $apiUrl,
+                    $token !== null && $token !== '' ? 'with authentication' : 'without authentication',
+                    $e->getMessage()
+                ),
                 previous: $e
             );
         }
@@ -169,7 +174,12 @@ class GithubSchemaLoader implements SchemaLoaderInterface
             $response = $this->httpClient->sendRequest($request);
         } catch (ClientExceptionInterface $e) {
             throw new SchemaLoaderException(
-                \sprintf('Failed to fetch file from "%s": %s', $url, $e->getMessage()),
+                \sprintf(
+                    'Failed to fetch file from "%s" (%s): %s',
+                    $url,
+                    $token !== null && $token !== '' ? 'with authentication' : 'without authentication',
+                    $e->getMessage(),
+                ),
                 previous: $e
             );
         }
