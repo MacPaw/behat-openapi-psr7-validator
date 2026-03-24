@@ -232,7 +232,9 @@ class OpenApiValidator
                 continue;
             }
 
-            $messages[] = \sprintf('Field: %s', implode('.', $breadCrumb->buildChain()));
+            /** @var array<int|string|null> $chain */
+            $chain = $breadCrumb->buildChain();
+            $messages[] = \sprintf('Field: %s', implode('.', array_map(static fn(int|string|null $v): string => (string) $v, $chain)));
         }
 
         return implode(' | ', array_reverse($messages));

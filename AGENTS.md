@@ -19,7 +19,6 @@ All commands are defined in `composer.json` scripts section:
 
 ### Known issues
 
-- PHPStan (level: max) has 1 pre-existing error in `src/Validator/OpenApiValidator.php:235` (`argument.type` — `implode` receives `array<mixed>` instead of `array<string>`). This exists on the `develop` branch and is not caused by agent changes.
 - PHP-CS-Fixer emits a warning when run on PHP 8.3+ because `composer.json` declares minimum PHP 8.2. This is cosmetic and does not affect results.
 
 ### System dependencies
