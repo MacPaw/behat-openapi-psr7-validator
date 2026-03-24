@@ -288,7 +288,7 @@ final class OpenApiValidatorTest extends TestCase
      */
     private function createMockSchemaLoader(array $schemas): SchemaLoaderInterface
     {
-        $loader = $this->createMock(SchemaLoaderInterface::class);
+        $loader = self::createStub(SchemaLoaderInterface::class);
         $loader->method('loadSchemas')->willReturn($schemas);
 
         return $loader;

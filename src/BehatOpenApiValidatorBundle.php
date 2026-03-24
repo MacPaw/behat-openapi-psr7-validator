@@ -14,6 +14,8 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Symfony\Component\HttpClient\Psr18Client;
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -26,7 +28,16 @@ class BehatOpenApiValidatorBundle extends AbstractBundle
 
     public function configure(DefinitionConfigurator $definition): void
     {
-        $definition->rootNode()
+        $this->configureBundleDefinition($definition->rootNode());
+    }
+
+    private function configureBundleDefinition(NodeDefinition $root): void
+    {
+        if (!$root instanceof ArrayNodeDefinition) {
+            throw new \LogicException('Bundle configuration root must be an array node.');
+        }
+
+        $root
             ->children()
                 ->booleanNode('is_enabled')
                     ->defaultTrue()

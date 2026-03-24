@@ -35,7 +35,7 @@ final class ApiContextListenerTest extends TestCase
     {
         $request = Request::create('/api/users', 'GET');
         $response = new Response('{"users":[]}', 200);
-        $kernel = $this->createMock(HttpKernelInterface::class);
+        $kernel = self::createStub(HttpKernelInterface::class);
 
         $event = new ResponseEvent(
             $kernel,
@@ -56,7 +56,7 @@ final class ApiContextListenerTest extends TestCase
     {
         $request = Request::create('/api/users', 'GET');
         $response = new Response('{"users":[]}', 200);
-        $kernel = $this->createMock(HttpKernelInterface::class);
+        $kernel = self::createStub(HttpKernelInterface::class);
 
         $event = new ResponseEvent(
             $kernel,
