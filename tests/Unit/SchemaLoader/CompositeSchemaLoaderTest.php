@@ -22,12 +22,12 @@ final class CompositeSchemaLoaderTest extends TestCase
     #[Test]
     public function itMergesSchemasFromMultipleLoaders(): void
     {
-        $loader1 = $this->createMock(SchemaLoaderInterface::class);
+        $loader1 = self::createStub(SchemaLoaderInterface::class);
         $loader1->method('loadSchemas')->willReturn([
             '/path/to/api1.yaml' => 'content1',
         ]);
 
-        $loader2 = $this->createMock(SchemaLoaderInterface::class);
+        $loader2 = self::createStub(SchemaLoaderInterface::class);
         $loader2->method('loadSchemas')->willReturn([
             '/path/to/api2.yaml' => 'content2',
         ]);
@@ -43,12 +43,12 @@ final class CompositeSchemaLoaderTest extends TestCase
     #[Test]
     public function itOverwritesDuplicateKeysWithLaterLoader(): void
     {
-        $loader1 = $this->createMock(SchemaLoaderInterface::class);
+        $loader1 = self::createStub(SchemaLoaderInterface::class);
         $loader1->method('loadSchemas')->willReturn([
             '/path/to/api.yaml' => 'content1',
         ]);
 
-        $loader2 = $this->createMock(SchemaLoaderInterface::class);
+        $loader2 = self::createStub(SchemaLoaderInterface::class);
         $loader2->method('loadSchemas')->willReturn([
             '/path/to/api.yaml' => 'content2',
         ]);
