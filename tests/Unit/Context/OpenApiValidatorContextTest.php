@@ -33,7 +33,7 @@ final class OpenApiValidatorContextTest extends TestCase
             new Response()
         );
 
-        $validator = $this->createMock(OpenApiValidator::class);
+        $validator = self::createStub(OpenApiValidator::class);
         $context = new OpenApiValidatorContext($validator);
 
         self::assertNotNull(RequestResponseHolder::getLastRequest());
@@ -69,7 +69,7 @@ final class OpenApiValidatorContextTest extends TestCase
     #[Test]
     public function itSkipsRequestValidationWhenDisabledViaStep(): void
     {
-        $validator = $this->createMock(OpenApiValidator::class);
+        $validator = self::createStub(OpenApiValidator::class);
 
         $context = new OpenApiValidatorContext($validator);
 
@@ -89,7 +89,7 @@ final class OpenApiValidatorContextTest extends TestCase
     #[Test]
     public function itSkipsResponseValidationWhenDisabledViaStep(): void
     {
-        $validator = $this->createMock(OpenApiValidator::class);
+        $validator = self::createStub(OpenApiValidator::class);
 
         $context = new OpenApiValidatorContext($validator);
 
@@ -109,10 +109,11 @@ final class OpenApiValidatorContextTest extends TestCase
     #[Test]
     public function itDoesNotValidateWhenDisabled(): void
     {
-        $validator = $this->createMock(OpenApiValidator::class);
+        $validator = self::createStub(OpenApiValidator::class);
         $context = new OpenApiValidatorContext($validator, isEnabled: false);
 
-        // Verify isEnabled can be checked via constructor
-        self::assertInstanceOf(OpenApiValidatorContext::class, $context);
+        $reflection = new ReflectionProperty($context, 'isEnabled');
+        $reflection->setAccessible(true);
+        self::assertFalse($reflection->getValue($context));
     }
 }

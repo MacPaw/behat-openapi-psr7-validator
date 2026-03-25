@@ -8,6 +8,7 @@ use BehatOpenApiValidator\SchemaLoader\Exception\SchemaLoaderException;
 use BehatOpenApiValidator\SchemaLoader\GithubSchemaLoader;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
@@ -19,23 +20,36 @@ use Psr\Http\Message\StreamInterface;
 final class GithubSchemaLoaderTest extends TestCase
 {
     private ClientInterface&MockObject $httpClient;
-    private RequestFactoryInterface&MockObject $requestFactory;
-    private RequestInterface&MockObject $request;
+    private RequestFactoryInterface&Stub $requestFactory;
+    private RequestInterface&Stub $request;
 
     protected function setUp(): void
     {
+        if ($this->name() === 'itThrowsExceptionForInvalidGithubUrl') {
+            return;
+        }
+
+        $this->requestFactory = self::createStub(RequestFactoryInterface::class);
+        $this->request = self::createStub(RequestInterface::class);
         $this->httpClient = $this->createMock(ClientInterface::class);
-        $this->requestFactory = $this->createMock(RequestFactoryInterface::class);
-        $this->request = $this->createMock(RequestInterface::class);
     }
 
     #[Test]
     public function itThrowsExceptionForInvalidGithubUrl(): void
     {
+        $unusedClient = new class implements ClientInterface {
+            public function sendRequest(RequestInterface $request): ResponseInterface
+            {
+                throw new \LogicException('HTTP client must not be used when URL is invalid.');
+            }
+        };
+
+        $requestFactory = self::createStub(RequestFactoryInterface::class);
+
         $loader = new GithubSchemaLoader(
             [['url' => 'https://example.com/invalid', 'token_env' => null]],
-            $this->httpClient,
-            $this->requestFactory
+            $unusedClient,
+            $requestFactory
         );
 
         $this->expectException(SchemaLoaderException::class);
@@ -49,10 +63,10 @@ final class GithubSchemaLoaderTest extends TestCase
     {
         $this->setupRequestFactoryMock();
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response = self::createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
-        $stream = $this->createMock(StreamInterface::class);
+        $stream = self::createStub(StreamInterface::class);
         $stream->method('getContents')->willReturn(json_encode([
             ['name' => 'readme.txt', 'path' => 'schemas/readme.txt', 'type' => 'file', 'download_url' => 'https://raw.github.com/readme.txt'],
         ], JSON_THROW_ON_ERROR));
@@ -205,7 +219,8 @@ final class GithubSchemaLoaderTest extends TestCase
     {
         $_ENV['GITHUB_TOKEN'] = 'test-token-123';
 
-        $request = $this->createMock(RequestInterface::class);
+        /** @var RequestInterface&Stub $request */
+        $request = self::createStub(RequestInterface::class);
 
         $authHeaderAdded = false;
         $request->method('withHeader')
@@ -271,7 +286,7 @@ final class GithubSchemaLoaderTest extends TestCase
     {
         $this->setupRequestFactoryMock();
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response = self::createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(404);
         $response->method('getReasonPhrase')->willReturn('Not Found');
         $response->method('getHeaderLine')->willReturn('');
@@ -297,7 +312,7 @@ final class GithubSchemaLoaderTest extends TestCase
     {
         $this->setupRequestFactoryMock();
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response = self::createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(403);
         $response->method('getHeaderLine')
             ->willReturnMap([
@@ -326,10 +341,10 @@ final class GithubSchemaLoaderTest extends TestCase
     {
         $this->setupRequestFactoryMock();
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response = self::createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
-        $stream = $this->createMock(StreamInterface::class);
+        $stream = self::createStub(StreamInterface::class);
         $stream->method('getContents')->willReturn('invalid json');
 
         $response->method('getBody')->willReturn($stream);
@@ -400,10 +415,10 @@ final class GithubSchemaLoaderTest extends TestCase
      */
     private function createResponseWithJson(array $items): ResponseInterface
     {
-        $response = $this->createMock(ResponseInterface::class);
+        $response = self::createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
-        $stream = $this->createMock(StreamInterface::class);
+        $stream = self::createStub(StreamInterface::class);
         $stream->method('getContents')->willReturn(json_encode($items, JSON_THROW_ON_ERROR));
 
         $response->method('getBody')->willReturn($stream);
@@ -413,10 +428,10 @@ final class GithubSchemaLoaderTest extends TestCase
 
     private function createResponseWithContent(string $content): ResponseInterface
     {
-        $response = $this->createMock(ResponseInterface::class);
+        $response = self::createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
-        $stream = $this->createMock(StreamInterface::class);
+        $stream = self::createStub(StreamInterface::class);
         $stream->method('getContents')->willReturn($content);
 
         $response->method('getBody')->willReturn($stream);
