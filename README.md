@@ -1,5 +1,7 @@
 # Behat OpenAPI PSR-7 Validator
 
+![Behat OpenAPI PSR-7 Validator](.github/header.png)
+
 Symfony Behat extension for automatic OpenAPI validation of HTTP requests/responses using [league/openapi-psr7-validator](https://github.com/thephpleague/openapi-psr7-validator).
 
 
