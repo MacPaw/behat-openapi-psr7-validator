@@ -55,6 +55,43 @@ final class LocalSchemaLoaderTest extends TestCase
     }
 
     #[Test]
+    public function itLoadsSingleYamlFile(): void
+    {
+        $tempDir = sys_get_temp_dir() . '/behat-openapi-test-' . uniqid();
+        mkdir($tempDir, 0o777, true);
+
+        $yamlContent = "openapi: '3.0.0'\ninfo:\n  title: Test API\n  version: '1.0.0'";
+        file_put_contents($tempDir . '/openapi.yaml', $yamlContent);
+        file_put_contents($tempDir . '/other.yaml', 'ignored');
+
+        try {
+            $loader = new LocalSchemaLoader([$tempDir . '/openapi.yaml']);
+            $schemas = $loader->loadSchemas();
+
+            self::assertSame([realpath($tempDir . '/openapi.yaml') => $yamlContent], $schemas);
+        } finally {
+            unlink($tempDir . '/openapi.yaml');
+            unlink($tempDir . '/other.yaml');
+            rmdir($tempDir);
+        }
+    }
+
+    #[Test]
+    public function itSkipsNonYamlFile(): void
+    {
+        $tempFile = sys_get_temp_dir() . '/behat-openapi-test-' . uniqid() . '.txt';
+        file_put_contents($tempFile, 'ignored');
+
+        try {
+            $loader = new LocalSchemaLoader([$tempFile]);
+
+            self::assertSame([], $loader->loadSchemas());
+        } finally {
+            unlink($tempFile);
+        }
+    }
+
+    #[Test]
     public function itLoadsFromMultipleDirectories(): void
     {
         $tempDir1 = sys_get_temp_dir() . '/behat-openapi-test1-' . uniqid();
