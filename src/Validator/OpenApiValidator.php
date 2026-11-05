@@ -20,10 +20,14 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Yaml\Yaml;
 
+use function http_build_query;
+use function str_starts_with;
 use function strtolower;
 
 class OpenApiValidator
 {
+    private const FORM_URLENCODED = 'application/x-www-form-urlencoded';
+
     /** @var array<string, ServerRequestValidator> */
     private array $requestValidators = [];
 
@@ -37,9 +41,12 @@ class OpenApiValidator
 
     private readonly PsrHttpFactory $psrHttpFactory;
 
+    private readonly Psr17Factory $streamFactory;
+
     public function __construct(private readonly SchemaLoaderInterface $schemaLoader)
     {
         $psr17Factory = new Psr17Factory();
+        $this->streamFactory = $psr17Factory;
         $this->psrHttpFactory = new PsrHttpFactory(
             serverRequestFactory: $psr17Factory,
             streamFactory: $psr17Factory,
@@ -242,7 +249,29 @@ class OpenApiValidator
 
     private function convertRequest(Request $symfonyRequest): ServerRequestInterface
     {
-        return $this->psrHttpFactory->createRequest($symfonyRequest);
+        $psrRequest = $this->psrHttpFactory->createRequest($symfonyRequest);
+
+        // Requests built in-kernel (Request::create() with parameters, as Behat's ApiContext does) keep
+        // form fields only in $request->request and have no raw content, while the form-urlencoded body
+        // validator parses the raw body. Rebuild the body so the fields are validated. Request::create()
+        // sets no Content-Type for PATCH, so a missing one is treated as form-urlencoded too.
+        $contentType = strtolower((string) $symfonyRequest->headers->get('Content-Type'));
+
+        if (
+            '' !== $symfonyRequest->getContent()
+            || [] === $symfonyRequest->request->all()
+            || ('' !== $contentType && !str_starts_with($contentType, self::FORM_URLENCODED))
+        ) {
+            return $psrRequest;
+        }
+
+        if ('' === $contentType) {
+            $psrRequest = $psrRequest->withHeader('Content-Type', self::FORM_URLENCODED);
+        }
+
+        return $psrRequest->withBody(
+            $this->streamFactory->createStream(http_build_query($symfonyRequest->request->all())),
+        );
     }
 
     private function convertResponse(Response $symfonyResponse): ResponseInterface

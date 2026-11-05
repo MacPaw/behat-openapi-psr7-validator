@@ -7,6 +7,7 @@ namespace BehatOpenApiValidator\Tests\Unit\Validator;
 use BehatOpenApiValidator\SchemaLoader\SchemaLoaderInterface;
 use BehatOpenApiValidator\Validator\OpenApiValidator;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -79,6 +80,32 @@ final class OpenApiValidatorTest extends TestCase
                             type: integer
                           name:
                             type: string
+          /subscriptions:
+            post:
+              requestBody:
+                $ref: '#/components/requestBodies/Subscription'
+              responses:
+                '204':
+                  description: Subscribed
+            patch:
+              requestBody:
+                $ref: '#/components/requestBodies/Subscription'
+              responses:
+                '204':
+                  description: Updated
+        components:
+          requestBodies:
+            Subscription:
+              required: true
+              content:
+                application/x-www-form-urlencoded:
+                  schema:
+                    type: object
+                    required:
+                      - email
+                    properties:
+                      email:
+                        type: string
         YAML;
 
     #[Test]
@@ -138,6 +165,36 @@ final class OpenApiValidatorTest extends TestCase
         $errorMessage = $result->getErrorMessage();
         self::assertNotNull($errorMessage);
         self::assertStringContainsString('name', strtolower($errorMessage));
+    }
+
+    #[Test]
+    #[TestWith(['POST'])]
+    #[TestWith(['PATCH'])]
+    public function itValidatesFormFieldsOfRequestWithoutRawContent(string $method): void
+    {
+        $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
+        $validator = new OpenApiValidator($schemaLoader);
+
+        $request = Request::create('/subscriptions', $method, ['email' => 'john@example.com']);
+        $result = $validator->validateRequest($request);
+
+        self::assertTrue($result->isValid());
+        self::assertNull($result->getErrorMessage());
+    }
+
+    #[Test]
+    public function itFailsValidationForMissingFormFieldOfRequestWithoutRawContent(): void
+    {
+        $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
+        $validator = new OpenApiValidator($schemaLoader);
+
+        $request = Request::create('/subscriptions', 'POST', ['name' => 'John Doe']);
+        $result = $validator->validateRequest($request);
+
+        self::assertFalse($result->isValid());
+        $errorMessage = $result->getErrorMessage();
+        self::assertNotNull($errorMessage);
+        self::assertStringContainsString('email', strtolower($errorMessage));
     }
 
     #[Test]
