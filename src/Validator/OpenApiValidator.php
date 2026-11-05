@@ -270,7 +270,7 @@ class OpenApiValidator
         }
 
         return $psrRequest->withBody(
-            $this->streamFactory->createStream(http_build_query($symfonyRequest->request->all())),
+            $this->streamFactory->createStream(http_build_query($symfonyRequest->request->all(), '', '&')),
         );
     }
 

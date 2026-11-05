@@ -183,6 +183,24 @@ final class OpenApiValidatorTest extends TestCase
     }
 
     #[Test]
+    public function itRebuildsFormBodyRegardlessOfArgSeparatorSetting(): void
+    {
+        $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
+        $validator = new OpenApiValidator($schemaLoader);
+        $previousSeparator = ini_set('arg_separator.output', '&amp;');
+
+        try {
+            $request = Request::create('/subscriptions', 'POST', ['name' => 'John Doe', 'email' => 'john@example.com']);
+            $result = $validator->validateRequest($request);
+        } finally {
+            ini_set('arg_separator.output', (string) $previousSeparator);
+        }
+
+        self::assertTrue($result->isValid());
+        self::assertNull($result->getErrorMessage());
+    }
+
+    #[Test]
     public function itFailsValidationForMissingFormFieldOfRequestWithoutRawContent(): void
     {
         $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
