@@ -93,6 +93,18 @@ final class OpenApiValidatorTest extends TestCase
               responses:
                 '204':
                   description: Updated
+          /notes:
+            post:
+              requestBody:
+                required: false
+                content:
+                  text/plain:
+                    schema:
+                      type: string
+                      maxLength: 0
+              responses:
+                '204':
+                  description: Created
         components:
           requestBodies:
             Subscription:
@@ -195,6 +207,48 @@ final class OpenApiValidatorTest extends TestCase
         } finally {
             ini_set('arg_separator.output', (string) $previousSeparator);
         }
+
+        self::assertTrue($result->isValid());
+        self::assertNull($result->getErrorMessage());
+    }
+
+    #[Test]
+    public function itKeepsExistingRawFormBody(): void
+    {
+        $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
+        $validator = new OpenApiValidator($schemaLoader);
+
+        $request = Request::create(
+            '/subscriptions',
+            'POST',
+            ['name' => 'John Doe'],
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/x-www-form-urlencoded'],
+            'email=john%40example.com'
+        );
+        $result = $validator->validateRequest($request);
+
+        self::assertTrue($result->isValid());
+        self::assertNull($result->getErrorMessage());
+    }
+
+    #[Test]
+    public function itDoesNotRebuildBodyOfNonFormRequestWithoutRawContent(): void
+    {
+        $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
+        $validator = new OpenApiValidator($schemaLoader);
+
+        $request = Request::create(
+            '/notes',
+            'POST',
+            ['title' => 'Groceries'],
+            [],
+            [],
+            ['CONTENT_TYPE' => 'text/plain'],
+            ''
+        );
+        $result = $validator->validateRequest($request);
 
         self::assertTrue($result->isValid());
         self::assertNull($result->getErrorMessage());
