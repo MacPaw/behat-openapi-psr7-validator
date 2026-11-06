@@ -257,10 +257,11 @@ class OpenApiValidator
         // sets no Content-Type for PATCH, so a missing one is treated as form-urlencoded too.
         $contentType = strtolower((string) $symfonyRequest->headers->get('Content-Type'));
 
+        // Cheap checks first: getContent() reads a resource-backed body into memory.
         if (
-            '' !== $symfonyRequest->getContent()
-            || [] === $symfonyRequest->request->all()
+            [] === $symfonyRequest->request->all()
             || ('' !== $contentType && !str_starts_with($contentType, self::FORM_URLENCODED))
+            || '' !== $symfonyRequest->getContent()
         ) {
             return $psrRequest;
         }
