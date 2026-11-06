@@ -102,6 +102,10 @@ final class OpenApiValidatorTest extends TestCase
                     schema:
                       type: string
                       maxLength: 0
+                  application/x-www-form-urlencoded-legacy:
+                    schema:
+                      type: string
+                      maxLength: 0
               responses:
                 '204':
                   description: Created
@@ -234,7 +238,9 @@ final class OpenApiValidatorTest extends TestCase
     }
 
     #[Test]
-    public function itDoesNotRebuildBodyOfNonFormRequestWithoutRawContent(): void
+    #[TestWith(['text/plain'])]
+    #[TestWith(['application/x-www-form-urlencoded-legacy'])]
+    public function itDoesNotRebuildBodyOfNonFormRequestWithoutRawContent(string $contentType): void
     {
         $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
         $validator = new OpenApiValidator($schemaLoader);
@@ -245,7 +251,7 @@ final class OpenApiValidatorTest extends TestCase
             ['title' => 'Groceries'],
             [],
             [],
-            ['CONTENT_TYPE' => 'text/plain'],
+            ['CONTENT_TYPE' => $contentType],
             ''
         );
         $result = $validator->validateRequest($request);
@@ -255,12 +261,14 @@ final class OpenApiValidatorTest extends TestCase
     }
 
     #[Test]
-    public function itFailsValidationForMissingFormFieldOfRequestWithoutRawContent(): void
+    #[TestWith(['application/x-www-form-urlencoded'])]
+    #[TestWith(['application/x-www-form-urlencoded; charset=UTF-8'])]
+    public function itFailsValidationForMissingFormFieldOfRequestWithoutRawContent(string $contentType): void
     {
         $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
         $validator = new OpenApiValidator($schemaLoader);
 
-        $request = Request::create('/subscriptions', 'POST', ['name' => 'John Doe']);
+        $request = Request::create('/subscriptions', 'POST', ['name' => 'John Doe'], [], [], ['CONTENT_TYPE' => $contentType]);
         $result = $validator->validateRequest($request);
 
         self::assertFalse($result->isValid());
