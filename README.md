@@ -13,7 +13,7 @@ Symfony Behat extension for automatic OpenAPI validation of HTTP requests/respon
 ## Features
 
 - Automatic request/response validation against OpenAPI schemas
-- Scan local directories for OpenAPI YAML files
+- Load OpenAPI YAML files from local files or directories (directories are scanned recursively)
 - Fetch OpenAPI specs from remote GitHub repositories (with token support for private repos)
 - Separate control for request and response validation skipping
 - Auto-skip request validation for 4xx responses (configurable)
@@ -59,7 +59,8 @@ when@test:
         is_enabled: true
         should_request_on_4xx_be_skipped: true
         local_paths:
-            - '%kernel.project_dir%/docs/openapi'
+            - '%kernel.project_dir%/openapi.yaml'  # a single spec file
+            - '%kernel.project_dir%/docs/openapi'  # or a directory (scanned recursively)
         github_sources:
             - url: 'https://github.com/Owner/Repo/tree/main/docs/openapi'
               token_env: 'GITHUB_TOKEN'

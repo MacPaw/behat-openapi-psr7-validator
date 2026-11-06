@@ -7,6 +7,7 @@ namespace BehatOpenApiValidator\Tests\Unit\Validator;
 use BehatOpenApiValidator\SchemaLoader\SchemaLoaderInterface;
 use BehatOpenApiValidator\Validator\OpenApiValidator;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -79,6 +80,48 @@ final class OpenApiValidatorTest extends TestCase
                             type: integer
                           name:
                             type: string
+          /subscriptions:
+            post:
+              requestBody:
+                $ref: '#/components/requestBodies/Subscription'
+              responses:
+                '204':
+                  description: Subscribed
+            patch:
+              requestBody:
+                $ref: '#/components/requestBodies/Subscription'
+              responses:
+                '204':
+                  description: Updated
+          /notes:
+            post:
+              requestBody:
+                required: false
+                content:
+                  text/plain:
+                    schema:
+                      type: string
+                      maxLength: 0
+                  application/x-www-form-urlencoded-legacy:
+                    schema:
+                      type: string
+                      maxLength: 0
+              responses:
+                '204':
+                  description: Created
+        components:
+          requestBodies:
+            Subscription:
+              required: true
+              content:
+                application/x-www-form-urlencoded:
+                  schema:
+                    type: object
+                    required:
+                      - email
+                    properties:
+                      email:
+                        type: string
         YAML;
 
     #[Test]
@@ -138,6 +181,100 @@ final class OpenApiValidatorTest extends TestCase
         $errorMessage = $result->getErrorMessage();
         self::assertNotNull($errorMessage);
         self::assertStringContainsString('name', strtolower($errorMessage));
+    }
+
+    #[Test]
+    #[TestWith(['POST'])]
+    #[TestWith(['PATCH'])]
+    public function itValidatesFormFieldsOfRequestWithoutRawContent(string $method): void
+    {
+        $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
+        $validator = new OpenApiValidator($schemaLoader);
+
+        $request = Request::create('/subscriptions', $method, ['email' => 'john@example.com']);
+        $result = $validator->validateRequest($request);
+
+        self::assertTrue($result->isValid());
+        self::assertNull($result->getErrorMessage());
+    }
+
+    #[Test]
+    public function itRebuildsFormBodyRegardlessOfArgSeparatorSetting(): void
+    {
+        $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
+        $validator = new OpenApiValidator($schemaLoader);
+        $previousSeparator = ini_set('arg_separator.output', '&amp;');
+
+        try {
+            $request = Request::create('/subscriptions', 'POST', ['name' => 'John Doe', 'email' => 'john@example.com']);
+            $result = $validator->validateRequest($request);
+        } finally {
+            ini_set('arg_separator.output', (string) $previousSeparator);
+        }
+
+        self::assertTrue($result->isValid());
+        self::assertNull($result->getErrorMessage());
+    }
+
+    #[Test]
+    public function itKeepsExistingRawFormBody(): void
+    {
+        $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
+        $validator = new OpenApiValidator($schemaLoader);
+
+        $request = Request::create(
+            '/subscriptions',
+            'POST',
+            ['name' => 'John Doe'],
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/x-www-form-urlencoded'],
+            'email=john%40example.com'
+        );
+        $result = $validator->validateRequest($request);
+
+        self::assertTrue($result->isValid());
+        self::assertNull($result->getErrorMessage());
+    }
+
+    #[Test]
+    #[TestWith(['text/plain'])]
+    #[TestWith(['application/x-www-form-urlencoded-legacy'])]
+    public function itDoesNotRebuildBodyOfNonFormRequestWithoutRawContent(string $contentType): void
+    {
+        $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
+        $validator = new OpenApiValidator($schemaLoader);
+
+        $request = Request::create(
+            '/notes',
+            'POST',
+            ['title' => 'Groceries'],
+            [],
+            [],
+            ['CONTENT_TYPE' => $contentType],
+            ''
+        );
+        $result = $validator->validateRequest($request);
+
+        self::assertTrue($result->isValid());
+        self::assertNull($result->getErrorMessage());
+    }
+
+    #[Test]
+    #[TestWith(['application/x-www-form-urlencoded'])]
+    #[TestWith(['application/x-www-form-urlencoded; charset=UTF-8'])]
+    public function itFailsValidationForMissingFormFieldOfRequestWithoutRawContent(string $contentType): void
+    {
+        $schemaLoader = $this->createMockSchemaLoader(['api.yaml' => self::SIMPLE_OPENAPI_SCHEMA]);
+        $validator = new OpenApiValidator($schemaLoader);
+
+        $request = Request::create('/subscriptions', 'POST', ['name' => 'John Doe'], [], [], ['CONTENT_TYPE' => $contentType]);
+        $result = $validator->validateRequest($request);
+
+        self::assertFalse($result->isValid());
+        $errorMessage = $result->getErrorMessage();
+        self::assertNotNull($errorMessage);
+        self::assertStringContainsString('email', strtolower($errorMessage));
     }
 
     #[Test]

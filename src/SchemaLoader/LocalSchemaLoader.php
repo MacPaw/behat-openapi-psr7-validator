@@ -18,6 +18,14 @@ class LocalSchemaLoader implements SchemaLoaderInterface
         $schemas = [];
 
         foreach ($this->paths as $path) {
+            if (is_file($path)) {
+                if (preg_match('/\.ya?ml$/', $path) === 1) {
+                    $schemas[(string) realpath($path)] = (string) file_get_contents($path);
+                }
+
+                continue;
+            }
+
             if (is_dir($path) === false) {
                 continue;
             }
