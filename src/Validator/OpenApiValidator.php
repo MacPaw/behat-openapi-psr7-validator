@@ -20,9 +20,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Yaml\Yaml;
 
+use function explode;
 use function http_build_query;
-use function str_starts_with;
 use function strtolower;
+use function trim;
 
 class OpenApiValidator
 {
@@ -255,12 +256,12 @@ class OpenApiValidator
         // form fields only in $request->request and have no raw content, while the form-urlencoded body
         // validator parses the raw body. Rebuild the body so the fields are validated. Request::create()
         // sets no Content-Type for PATCH, so a missing one is treated as form-urlencoded too.
-        $contentType = strtolower((string) $symfonyRequest->headers->get('Content-Type'));
+        $contentType = strtolower(trim(explode(';', (string) $symfonyRequest->headers->get('Content-Type'))[0]));
 
         // Cheap checks first: getContent() reads a resource-backed body into memory.
         if (
             [] === $symfonyRequest->request->all()
-            || ('' !== $contentType && !str_starts_with($contentType, self::FORM_URLENCODED))
+            || ('' !== $contentType && self::FORM_URLENCODED !== $contentType)
             || '' !== $symfonyRequest->getContent()
         ) {
             return $psrRequest;
